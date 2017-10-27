@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Pratice-Game</title>
+</head>
+
+<body onload="HuriGame()">
+    <script type="text/javascript">
+    function HuriGame() {
+        var game,
+            renderer = PIXI.autoDetectRenderer(800, 480);
+        document.body.appendChild(renderer.view);
+
+        PIXI.loader
+            .add(["/assets/GameResource/Hello.png",
+                  "/assets/GameResource/Ochiru.JPG",
+                  "/assets/GameResource/BG.jpg",
+                  "/assets/GameResource/Character_Run.json",
+                  "/assets/GameResource/Character_Idle.json"])
+            .load(EngineStart);
+
+
+        function EngineStart() {
+            game = new Game();
+            GameUpdate();
+        }
+
+        function Game() {
+            this.stage = new PIXI.Container();
+
+            // 背景初期化
+            this.background = new PIXI.Sprite(PIXI.loader.resources["/assets/GameResource/BG.jpg"].texture);
+            this.background.x = 0;
+            this.background.y = 0;
+            this.stage.addChild(this.background);
+
+            // Coinの初期化
+            this.coinCount = 20;
+            this.coins = new Array();
+            for (var i = 0; i < this.coinCount; ++i) {
+                this.coins[i] = new PIXI.Sprite(PIXI.loader.resources["/assets/GameResource/Ochiru.JPG"].texture);
+                this.coins[i].velocity = 0.0;
+                this.coins[i].ResetPosition = function() {
+                    this.x = Math.floor(Math.random() * renderer.width);
+                    this.y = -this.texture.height -(Math.floor(Math.random() * renderer.height / 2));
+                    this.velocity = 0.0;
+                    this.accVel = Math.floor(Math.random() + 0.15) + 0.05;
+                }
+                this.coins[i].ResetPosition();
+                this.coins[i].AddVelocity = function() {
+                    this.velocity += this.accVel;
+                }
+                this.coins[i].Move = function() {
+                    this.y += this.velocity;
+                    if (this.y > renderer.height)
+                        this.ResetPosition();
+                }
+
+                this.stage.addChild(this.coins[i]);
+            }
+
+            // Playerのアニメーションたちを作成
+            var walk_L = new Animation("/assets/GameResource/Character_Run.json",
+                                       "32 x 32 platform character_run_", ".png",
+                                       0, 5, 100);
+            var idle =   new Animation("/assets/GameResource/Character_Idle.json",
+                                       "32 x 32 platform character_idle_", ".png",
+                                       0, 3, 100);
+
+            // Playerの初期化
+            this.player = new AnimationStateManager("Walk_L");
+            this.player.AddAnimation("Walk_L", walk_L);
+            this.player.AddAnimation("Idle", idle);
+            this.player.AddVariable("moveSpeed", 0.0);
+            this.player.AddStatus("Walk_L", "Idle", "moveSpeed", "<", 0.5);
+            this.player.AddStatus("Idle", "Walk_L", "moveSpeed", ">", 0.5);
+
+            this.player.y = renderer.height - 50;
+            this.player.Move = function() {
+                var mousePosition = renderer.plugins.interaction.mouse.global;
+                var currentAnimation = this.GetCurrentAnimation();
+                var prev = this.x + this.y;
+                this.x = mousePosition.x - currentAnimation.texture.width / 2;
+                if (this.x < 0)
+                    this.x = 0;
+                if (this.x >= renderer.width - currentAnimation.texture.width)
+                    this.x = renderer.width - currentAnimation.texture.width;
+                this.SetVariable("moveSpeed", Math.abs(this.x + this.y - prev));
+                console.log(Math.abs(this.x + this.y - prev));
+            }
+            this.player.addChild(this.stage);
+        }
+
+        Game.prototype.Update = function() {
+            this.player.Move();
+            for (var i in this.coins) {
+                this.coins[i].AddVelocity();
+                this.coins[i].Move();
+            }
+        }
+
+        function GameUpdate() {
+            requestAnimationFrame(GameUpdate);
+
+            game.Update();
+            game.player.Update();
+
+            renderer.render(game.stage);
+        }
+      }
+
+    </script>
+
+</body>
+</html>
