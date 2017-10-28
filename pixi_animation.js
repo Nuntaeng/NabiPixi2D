@@ -16,18 +16,21 @@ function Animation (jsonPath, spriteName, extension, minIdx, maxIdx, frameTick) 
   var currentIdx = minIdx;
   var minIdx = minIdx;
   var maxIdx = maxIdx;
+  var tick = 0;
   
-  this.show = true;
   this.x = 0;
   this.y = 0;
+  this.width = 0;
+  this.height = 0;
   this.texture = null;
+  this.visible = true;
 
   // Method
-  this.ChangeFrame = function() {
+  var ChangeFrame = function() {
       for (var i in sprites) {
         if (i == currentIdx) {
-          console.log(i + "x: " + sprites[i].x + " / y: " + sprites[i].y + " " + this.show);
-          sprites[i].visible = this.show;
+          console.log(i + "x: " + sprites[i].x + " / y: " + sprites[i].y + " " + this.visible);
+          sprites[i].visible = this.visible;
           this.texture = sprites[i].texture;
         }
         else
@@ -38,16 +41,9 @@ function Animation (jsonPath, spriteName, extension, minIdx, maxIdx, frameTick) 
         currentIdx = 0;
       else
         currentIdx += 1;
-  }
 
-  /**
-   * @description 位置などの情報を変更する事があったらUpdateで呼んでください
-   */
-  this.Sync = function() {
-    for (var i in sprites) {
-      sprites[i].x = this.x;
-      sprites[i].y = this.y;
-    }
+      this.width = this.texture.width;
+      this.height = this.texture.height;
   }
 
   /**
@@ -59,17 +55,48 @@ function Animation (jsonPath, spriteName, extension, minIdx, maxIdx, frameTick) 
       stage.addChild(sprites[i]);
   }
 
+  /**
+   * @description 当たり判定をします
+   * @returns 当たったらtrue
+   */
+  this.isCollide = function(other) {
+    return this.x + this.width > other.x &&
+           this.x < other.x + other.width &&
+           this.y + this.height > other.y &&
+           this.y < other.y + other.height;
+  }
+
   // Constructure
   for (var i = minIdx; i <= maxIdx; ++i) {
     var frameName = spriteName + i + extension;
     var frame = new PIXI.Sprite(spritePack[frameName]);
-    sprites[i] = frame;
     if (i != 0)
-      sprites[i].visible = false;
+      frame.visible = false;
+    sprites[i] = frame;
   }
   this.texture = sprites[0].texture;
-  setInterval(this.ChangeFrame, frameTick);
+
+  const ticker = new PIXI.ticker.Ticker();
+  ticker.stop();
+  ticker.add((deltaTime) => {
+    for (var i in sprites) {
+      sprites[i].x = this.x;
+      sprites[i].y = this.y;
+    }
+
+    tick += deltaTime;
+    if (tick > frameTick * ticker.FPS) {
+      ChangeFrame();
+      tick = 0;
+    }
+  });
+  ticker.start();
 }
+
+
+
+
+
 
 
 function AnimationStateManager(startAnimeName) {
@@ -92,7 +119,7 @@ function AnimationStateManager(startAnimeName) {
 
   this.AddAnimation = function(name, animation) {
     animations[name] = animation;
-    animations[name].show = false;
+    animations[name].visible = false;
   }
 
   this.GetCurrentAnimation = function() {
@@ -102,16 +129,28 @@ function AnimationStateManager(startAnimeName) {
   this.AddVariable = function(name, value) {
     variables[name] = value;
   }
-
+  
   this.SetVariable = function(name, value) {
     variables[name] = value;
   }
 
+  /**
+   * @description 描画目録に追加します
+   * @param {*描画目録} stage
+   */
   this.addChild = function(stage) {
     for (var i in animations)
       animations[i].addChild(stage);
   }
 
+  /**
+   * @description アニメーション状態の移動条件を追加します
+   * @param {*このアニメーションの時} startAnime
+   * @param {*このアニメーションに差し替える} endAnime
+   * @param {*この変数の状態によって判断する} valueName
+   * @param {*この条件が当たった時} condition
+   * @param {*この数値以上・以下の時のみ} figure
+   */
   this.AddStatus = function(startAnime, endAnime, valueName, condition, figure) {
     var attribute = new SwitchStatus();
     attribute.startAnimation = startAnime;
@@ -122,15 +161,22 @@ function AnimationStateManager(startAnimeName) {
     conditions.push(attribute);
   }
 
+  /**
+   * @description  現在のアニメーションとの当たり判定をします。
+   * @returns  当たったらtrue
+   */
+  this.isCollide = function(other) {
+    return GetCurrentAnimation().isCollide(other);
+  }
+
   this.Update = function() {
 
-    animations[currentAnimationName].show = this.visible;
+    animations[currentAnimationName].visible = this.visible;
     animations[currentAnimationName].x = this.x;
     animations[currentAnimationName].y = this.y;
     console.log(currentAnimationName);
 
     for (var a_i in animations) {
-      animations[a_i].Sync();
       if (a_i === currentAnimationName)
         for (var c_i in conditions)
           if (conditions[c_i].startAnimation === currentAnimationName) {
@@ -146,7 +192,7 @@ function AnimationStateManager(startAnimeName) {
             }
           }
         else {
-          animations[a_i].show = false;
+          animations[a_i].visible = false;
         }
       }
   }
