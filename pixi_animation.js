@@ -116,6 +116,7 @@ function AnimationStateManager(startAnimeName) {
       animations = {},
       currentAnimationName = "";
   this.visible = true;
+  this.debug_mode = false;
   this.x = 0;
   this.y = 0;
   this.width = 0;
@@ -181,8 +182,15 @@ function AnimationStateManager(startAnimeName) {
     this.width = animations[currentAnimationName].width;
     this.height = animations[currentAnimationName].height;
 
+    if (this.debug_mode) {
+      console.log("Current Animation= " + currentAnimationName);
+      for (var i in animations) {
+        console.log(i + " / " + animations[i].visible);
+      }
+    }
+
     for (var a_i in animations) {
-      if (a_i === currentAnimationName)
+      if (a_i === currentAnimationName) {
         for (var c_i in conditions)
           if (conditions[c_i].startAnimation === currentAnimationName) {
             var conditionState = false;
@@ -195,6 +203,7 @@ function AnimationStateManager(startAnimeName) {
               break;
             }
           }
+        }
         else {
           animations[a_i].visible = false;
         }

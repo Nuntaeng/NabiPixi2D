@@ -89,8 +89,8 @@
             this.player.AddAnimation("Walk_L", walk_L);
             this.player.AddAnimation("Idle", idle);
             this.player.AddVariable("moveSpeed", 0.0);
-            this.player.AddStatus("Walk_L", "Idle", "moveSpeed", "<", 0.5);
-            this.player.AddStatus("Idle", "Walk_L", "moveSpeed", ">", 0.5);
+            this.player.AddStatus("Walk_L", "Idle", "moveSpeed", "<", 0.001);
+            this.player.AddStatus("Idle", "Walk_L", "moveSpeed", ">", 0.01);
 
             this.player.y = renderer.height - 50;
             this.player.Move = function() {
@@ -102,7 +102,7 @@
                     this.x = 0;
                 if (this.x >= renderer.width - currentAnimation.texture.width)
                     this.x = renderer.width - currentAnimation.texture.width;
-                this.SetVariable("moveSpeed", this.x + this.y - prev);
+                this.SetVariable("moveSpeed", Math.abs(this.x + this.y - prev));
             }
             this.player.addChild(this.stage);
         }
@@ -120,7 +120,6 @@
 
             game.Update();
             game.player.Update();
-            console.log(game.player.width + " / " + game.player.height);
 
             renderer.render(game.stage);
         }
