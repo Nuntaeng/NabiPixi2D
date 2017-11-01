@@ -103,7 +103,6 @@
                 if (this.x >= renderer.width - currentAnimation.texture.width)
                     this.x = renderer.width - currentAnimation.texture.width;
                 this.SetVariable("moveSpeed", this.x + this.y - prev);
-                console.log(this.x + this.y - prev);
             }
             this.player.addChild(this.stage);
         }
@@ -121,6 +120,7 @@
 
             game.Update();
             game.player.Update();
+            console.log(game.player.width + " / " + game.player.height);
 
             renderer.render(game.stage);
         }
