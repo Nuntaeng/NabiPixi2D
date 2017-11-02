@@ -5,6 +5,7 @@
     <title>Pratice-Game</title>
 
     <script src="pixi.min.js" type="text/javascript"></script>
+    <scirpt src="pixi_math.js" type="text/javascript"></scirpt>
     <script src="pixi_keyboard.js" type="text/javascript"></script>
     <script src="pixi_animation.js" type="text/javascript"></script>
 </head>
@@ -90,7 +91,10 @@
             this.player.AddAnimation("Idle", idle);
             this.player.AddVariable("moveSpeed", 0.0);
             this.player.AddStatus("Walk_L", "Idle", "moveSpeed", "<", 0.001);
-            this.player.AddStatus("Idle", "Walk_L", "moveSpeed", ">", 0.01);
+            this.player.AddStatus("Idle", "Walk_L", "moveSpeed", ">", 0.001);
+
+            this.player.collider = new NabiMath.Box2D(
+                this.player.x, this.player.y, this.player.width, this.player.height);
 
             this.player.y = renderer.height - 50;
             this.player.Move = function() {
@@ -112,6 +116,13 @@
             for (var i in this.coins) {
                 this.coins[i].AddVelocity();
                 this.coins[i].Move();
+
+                var collideBox = new NabiMath.Box2D(
+                    this.coins[i].x, this.coins[i].y, this.coins[i].w, this.coins[i].h);
+                if (collideBox.isCollide(this.player.collider)) {
+                    this.coins[i].ResetPosition();
+                    score += this.coins[i].score;
+                }
             }
         }
 

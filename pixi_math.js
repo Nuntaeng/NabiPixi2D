@@ -1,18 +1,22 @@
 var NabiMath  = function(){
 
 
-    function Box2D () {
-        this.x = 0;
-        this.y = 0;
-        this.w = 0;
-        this.h = 0;
+    class Box2D {
 
 
-        this.isCollide = fucntion(other) {
-            return this.x + this.width > other.x &&
-                this.x < other.x + other.width &&
-                this.y + this.height > other.y &&
-                this.y < other.y + other.height;
+        constructor (x, y, w, h) {
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+        }
+
+
+        isCollide (other) {
+            return this.x + this.w > other.x &&
+                this.x < other.x + other.w &&
+                this.y + this.h > other.y &&
+                this.y < other.y + other.h;
         }
     }
 }
