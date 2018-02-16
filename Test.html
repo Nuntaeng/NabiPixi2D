@@ -3,95 +3,31 @@
 <head>
     <meta charset="utf-8">
     <title>Pratice-Game</title>
-
-    <script src="pixi.min.js" type="text/javascript"></script>
-    <scirpt src="pixi_math.js" type="text/javascript"></scirpt>
-    <script src="pixi_keyboard.js" type="text/javascript"></script>
-    <script src="pixi_animation.js" type="text/javascript"></script>
-    <script src="pixi_atlas.js" type="text/javascript"></script>
 </head>
 
-<body onload="HuriGame()">
+<body>
+    <script type="text/javascript" src="pixi.min.js">
     <script type="text/javascript">
+
+    HuriGame();
+
     function HuriGame() {
         var game,
             renderer = PIXI.autoDetectRenderer(800, 480);
         document.body.appendChild(renderer.view);
 
-        // Ingame
-        var score = 0;
-        var timeLimit = 30 * 60;
-        var currentScene = 0;
-        var scenes = new Array();
-
         PIXI.loader
             .add(["/assets/GameResource/Hello.png",
                   "/assets/GameResource/Ochiru.JPG",
                   "/assets/GameResource/BG.jpg",
-                  "/assets/GameResource/coin-btc.png",
-                  "/assets/GameResource/Character_Run.json",
-                  "/assets/GameResource/Character_Idle.json",
-                  "/assets/GameResource/GameStart_Idle.png",
-                  "/assets/GameResource/GameStart_Down.png",
-                  "/assets/GameResource/NumberAtlas/Numbers.json"])
+                  "/assets/GameResource/Character_Run.json"])
             .load(EngineStart);
 
 
-
-
-
-
-        function Title() {
-            this.stage = new PIXI.Container();
-
-            // タイトル画面の背景
-            this.background = new PIXI.Sprite(PIXI.loader.resources["/assets/GameResource/BG.jpg"].texture);
-            this.background.x = 0;
-            this.background.y = 0;
-            this.stage.addChild(this.background);
-
-            // スタートボタン
-            var start_idle = PIXI.Texture.fromImage("/assets/GameResource/GameStart_Idle.png");
-            var start_down = PIXI.Texture.fromImage("/assets/GameResource/GameStart_Down.png");
-            this.startButton = new PIXI.Sprite(start_idle);
-            this.startButton.buttonMode = true;
-            this.startButton.anchor.set(0.5);
-            this.startButton.x = renderer.width / 2;
-            this.startButton.y = renderer.height / 2;
-            this.startButton.interactive = true;
-
-            this.startButton.onButtonDown = function() {
-                this.isdown = true;
-                this.texture = start_down;
-                this.alpha = 1;
-            }
-
-            this.startButton.onButtonUp = function() {
-                this.isdown = false;
-                this.texture = start_idle;
-            }
-
-            this.startButton.buttonCallback = function() {
-                currentScene = 1;
-            }
-
-            this.startButton.on('mousedown', this.startButton.onButtonDown)
-                            .on('touchstart', this.startButton.onButtonDown)
-                            .on('mouseup', this.startButton.onButtonUp)
-                            .on('touchend', this.startButton.onButtonUp)
-                            .on('mouseupoutside', this.startButton.onButtonUp)
-                            .on('touchendoutside', this.startButton.onButtonUp)
-                            .on('click', this.startButton.buttonCallback);
-            this.stage.addChild(this.startButton);
-
+        function EngineStart() {
+            game = new Game();
+            GameUpdate();
         }
-
-        Title.prototype.Update = function() {
-
-        }
-
-
-
 
         function Game() {
             this.stage = new PIXI.Container();
@@ -106,15 +42,7 @@
             this.coinCount = 20;
             this.coins = new Array();
             for (var i = 0; i < this.coinCount; ++i) {
-                if (i < 5) {
-                    this.coins[i] = new PIXI.Sprite(PIXI.loader.resources["/assets/GameResource/Ochiru.JPG"].texture);
-                    this.coins[i].score = 500;
-                }
-                else {
-                    this.coins[i] = new PIXI.Sprite(PIXI.loader.resources["/assets/GameResource/coin-btc.png"].texture);
-                    this.coins[i].score = 100;
-                }
-
+                this.coins[i] = new PIXI.Sprite(PIXI.loader.resources["/assets/GameResource/Ochiru.JPG"].texture);
                 this.coins[i].velocity = 0.0;
                 this.coins[i].ResetPosition = function() {
                     this.x = Math.floor(Math.random() * renderer.width);
@@ -135,49 +63,22 @@
                 this.stage.addChild(this.coins[i]);
             }
 
-            // Playerのアニメーションたちを作成
-            var walk_L = new Animation("/assets/GameResource/Character_Run.json",
-                                       "32 x 32 platform character_run_", ".png",
-                                       0, 5, 0.1);
-            var idle =   new Animation("/assets/GameResource/Character_Idle.json",
-                                       "32 x 32 platform character_idle_", ".png",
-                                       0, 3, 0.1);
-
             // Playerの初期化
-            this.player = new AnimationStateManager("Walk_L");
-            this.player.AddAnimation("Walk_L", walk_L);
-            this.player.AddAnimation("Idle", idle);
-            this.player.AddVariable("moveSpeed", 0.0);
-            this.player.AddStatus("Walk_L", "Idle", "moveSpeed", "<", 0.001);
-            this.player.AddStatus("Idle", "Walk_L", "moveSpeed", ">", 0.001);
-
+            this.player = new Animation("/assets/GameResource/Character_Run.json",
+                                        "32 x 32 platform character_run_",
+                                        ".png",
+                                        0, 5, 100);
             this.player.y = renderer.height - 50;
             this.player.Move = function() {
                 var mousePosition = renderer.plugins.interaction.mouse.global;
-                var currentAnimation = this.GetCurrentAnimation();
-                var prev = this.x + this.y;
-                this.x = mousePosition.x - currentAnimation.texture.width / 2;
+                this.x = mousePosition.x - this.texture.width / 2;
                 if (this.x < 0)
                     this.x = 0;
-                if (this.x >= renderer.width - currentAnimation.texture.width)
-                    this.x = renderer.width - currentAnimation.texture.width;
-                this.SetVariable("moveSpeed", Math.abs(this.x + this.y - prev));
+                if (this.x >= renderer.width - this.texture.width)
+                    this.x = renderer.width - this.texture.width;
             }
             this.player.addChild(this.stage);
 
-            // ゲームタイマー設定
-            this.gameTimer = new PIXI.ticker.Ticker();
-            this.gameTimer.tick = 0;
-            this.gameTimer.stop();
-            this.gameTimer.add((deltaTime) => {
-              this.gameTimer.tick += deltaTime;
-              if (this.gameTimer.tick >= timeLimit) {
-                scenes[2].scoreBoard.SetText(score.toString());
-                currentScene = 2;
-                this.gameTimer.stop();
-              }
-            });
-            this.gameTimer.start();
         }
 
         Game.prototype.Update = function() {
@@ -185,58 +86,16 @@
             for (var i in this.coins) {
                 this.coins[i].AddVelocity();
                 this.coins[i].Move();
-
-                var playerCollide = new NabiBox2D(
-                    this.player.x, this.player.y, this.player.width, this.player.height);
-
-                if (playerCollide.isCircleCollide(new NabiPoint(this.coins[i].x, this.coins[i].y), this.coins[i].width)) {
-                    this.coins[i].ResetPosition();
-                    score += this.coins[i].score;
-                    console.log("Score Added! : " + this.coins[i].score + " / Total = " + score);
-                }
             }
-
-            this.player.Update();
-        }
-
-
-
-
-
-        function Result() {
-            this.stage = new PIXI.Container();
-
-            // タイトル画面の背景
-            this.background = new PIXI.Sprite(PIXI.loader.resources["/assets/GameResource/BG.jpg"].texture);
-            this.background.x = 0;
-            this.background.y = 0;
-            this.stage.addChild(this.background);
-
-
-            // スコア出力部分
-            this.scoreBoard = new NabiSpriteAtlasNumber("/assets/GameResource/NumberAtlas/Numbers.json", 100, 150);
-            this.scoreBoard.SetParent(this.stage);
-        }
-
-        Result.prototype.Update = function() {
-
-        }
-
-
-
-
-        function EngineStart() {
-            currentScene = 0;
-            scenes[0] = new Title();
-            scenes[1] = new Game();
-            scenes[2] = new Result();
-            GameUpdate();
         }
 
         function GameUpdate() {
             requestAnimationFrame(GameUpdate);
-            scenes[currentScene].Update();
-            renderer.render(scenes[currentScene].stage);
+
+            game.Update();
+            game.player.Sync();
+
+            renderer.render(game.stage);
         }
       }
 
